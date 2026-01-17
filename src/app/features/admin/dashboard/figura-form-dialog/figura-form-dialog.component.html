@@ -1,0 +1,125 @@
+<h2 mat-dialog-title>
+    {{ isEditing ? 'Editar' : 'Nueva' }} Figura
+</h2>
+
+<mat-dialog-content>
+    <form [formGroup]="form" class="figura-form">
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Nombre</mat-label>
+            <input matInput formControlName="nombre" placeholder="Ej: Goku Super Saiyan" autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción corta</mat-label>
+            <input matInput formControlName="descripcionCorta" placeholder="Breve descripción para la card"
+                autocomplete="off" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Descripción completa</mat-label>
+            <textarea matInput formControlName="descripcionLarga" rows="3"></textarea>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Historia</mat-label>
+            <textarea matInput formControlName="historia" rows="3" placeholder="¿Cómo la conseguiste?"></textarea>
+        </mat-form-field>
+
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Precio (CLP)</mat-label>
+                <span matTextPrefix>$&nbsp;</span>
+                <input matInput [value]="precioFormateado()" (input)="onPrecioInput($event)" placeholder="0"
+                    autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Fecha de compra</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="fechaCompra" />
+                <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+        </div>
+
+        <div class="row">
+            <mat-form-field appearance="outline">
+                <mat-label>Lugar de compra</mat-label>
+                <input matInput formControlName="lugarCompra" placeholder="Ej: Persa Bio Bio" autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+                <mat-label>Categoría</mat-label>
+                <mat-select formControlName="categoria">
+                    <mat-option value="">Sin categoría</mat-option>
+                    <mat-option value="Anime">Anime</mat-option>
+                    <mat-option value="Comics">Comics</mat-option>
+                    <mat-option value="Videojuegos">Videojuegos</mat-option>
+                    <mat-option value="Películas">Películas</mat-option>
+                    <mat-option value="Pokémon">Pokémon</mat-option>
+                    <mat-option value="Otros">Otros</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+
+        <!-- Imagen Principal -->
+        <div class="image-upload-section">
+            <label>Imagen Principal *</label>
+            <div class="upload-area" [class.has-image]="mainImagePreview()" [class.drag-over]="isDraggingMain()"
+                (click)="mainImageInput.click()" (dragover)="onDragOver($event, 'main')"
+                (dragleave)="onDragLeave('main')" (drop)="onDrop($event, 'main')">
+                @if (mainImagePreview()) {
+                <img [src]="mainImagePreview()" alt="Preview" class="preview-image" />
+                <div class="image-overlay">
+                    <mat-icon>edit</mat-icon>
+                    <span>Cambiar imagen</span>
+                </div>
+                } @else {
+                <mat-icon>cloud_upload</mat-icon>
+                <span>Click o arrastra una imagen</span>
+                <small>JPG, PNG, WebP (máx 5MB)</small>
+                }
+            </div>
+            <input #mainImageInput type="file" accept="image/jpeg,image/png,image/webp" hidden
+                (change)="onMainImageSelect($event)" />
+            @if (uploadingMain()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            }
+        </div>
+
+        <!-- Imágenes Adicionales -->
+        <div class="image-upload-section">
+            <label>Imágenes Adicionales</label>
+            <div class="additional-images">
+                @for (img of additionalPreviews(); track img; let i = $index) {
+                <div class="additional-image-item">
+                    <img [src]="img" alt="Adicional" />
+                    <button mat-icon-button (click)="removeAdditionalImage(i)" type="button" class="remove-btn">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </div>
+                }
+                <div class="upload-area small" [class.drag-over]="isDraggingAdditional()"
+                    (click)="additionalImageInput.click()" (dragover)="onDragOver($event, 'additional')"
+                    (dragleave)="onDragLeave('additional')" (drop)="onDrop($event, 'additional')">
+                    <mat-icon>add_photo_alternate</mat-icon>
+                </div>
+            </div>
+            <input #additionalImageInput type="file" accept="image/jpeg,image/png,image/webp" hidden
+                (change)="onAdditionalImageSelect($event)" />
+            @if (uploadingAdditional()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            }
+        </div>
+
+        <mat-checkbox formControlName="destacado">Marcar como destacada</mat-checkbox>
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+    <button mat-button mat-dialog-close>Cancelar</button>
+    <button mat-raised-button color="primary"
+        [disabled]="form.invalid || saving() || uploadingMain() || uploadingAdditional() || !mainImagePreview()"
+        (click)="save()">
+        {{ saving() ? 'Guardando...' : 'Guardar' }}
+    </button>
+</mat-dialog-actions>

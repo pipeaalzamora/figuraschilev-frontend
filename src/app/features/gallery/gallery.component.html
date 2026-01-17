@@ -1,0 +1,72 @@
+<div class="gallery-container">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="logo">FigurasChileV</h1>
+            <p class="tagline">Mi colección de figuras y tesoros de ferias</p>
+            <div class="social-links">
+                <a href="https://instagram.com/figuraschilev" target="_blank" mat-icon-button>
+                    <mat-icon>photo_camera</mat-icon>
+                </a>
+                <a href="https://tiktok.com/@figuraschilev" target="_blank" mat-icon-button>
+                    <mat-icon>videocam</mat-icon>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Gallery Grid -->
+    <main class="gallery-main">
+        <!-- Search -->
+        <div class="search-container">
+            <mat-form-field appearance="outline" class="search-field">
+                <mat-label>Buscar figura</mat-label>
+                <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
+                    placeholder="Escribe el nombre..." />
+                <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+        </div>
+
+        @if (loading() && figuras().length === 0) {
+        <div class="loading-container">
+            <mat-spinner diameter="50"></mat-spinner>
+            <p>Cargando colección...</p>
+        </div>
+        } @else if (figuras().length === 0) {
+        <div class="empty-state">
+            <mat-icon>collections</mat-icon>
+            @if (searchTerm) {
+            <h3>Sin resultados</h3>
+            <p>No encontré figuras con "{{ searchTerm }}"</p>
+            } @else {
+            <h3>Aún no hay figuras</h3>
+            <p>Pronto agregaré mis tesoros de las ferias</p>
+            }
+        </div>
+        } @else {
+        <div class="cards-grid">
+            @for (figura of figuras(); track figura._id) {
+            <app-figura-card [figura]="figura" (cardClick)="openDetail($event)" />
+            }
+        </div>
+
+        @if (hasMore()) {
+        <div class="load-more">
+            <button mat-raised-button color="primary" (click)="loadMore()" [disabled]="loading()">
+                @if (loading()) {
+                <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                Cargar más
+                }
+            </button>
+        </div>
+        }
+        }
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2024 FigurasChileV - Colección personal</p>
+        <a routerLink="/admin/login" class="admin-link">Admin</a>
+    </footer>
+</div>
