@@ -49,6 +49,7 @@ export class GalleryComponent implements OnInit {
   totalItems = 0;
   hasMore = signal(false);
   isDark = this.themeService.isDark;
+  currentYear = new Date().getFullYear();
 
   private searchSubject = new Subject<string>();
 

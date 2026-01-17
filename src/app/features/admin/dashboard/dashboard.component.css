@@ -112,10 +112,19 @@ mat-toolbar {
     color: var(--text-primary) !important;
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
+    gap: 8px;
 }
 
 mat-toolbar span {
     color: var(--text-primary);
+}
+
+.menu-btn {
+    color: var(--text-primary) !important;
+}
+
+.menu-btn mat-icon {
+    color: var(--text-primary) !important;
 }
 
 .spacer {
@@ -268,4 +277,68 @@ mat-toolbar span {
 mat-paginator {
     background: transparent;
     border-top: 1px solid var(--border-light);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidenav {
+        width: 280px;
+    }
+
+    .content-area {
+        padding: 16px;
+    }
+
+    .stats-cards {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+
+    mat-toolbar {
+        padding: 0 8px;
+    }
+
+    mat-toolbar .btn-text {
+        display: none;
+    }
+
+    .table-container {
+        border-radius: 12px;
+    }
+
+    .table-image {
+        width: 48px;
+        height: 48px;
+    }
+
+    .figuras-table .mat-mdc-header-cell,
+    .figuras-table .mat-mdc-cell {
+        padding: 8px 4px;
+    }
+
+    /* Ocultar columnas en móvil */
+    .mat-column-fecha {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .mat-column-precio {
+        display: none;
+    }
+
+    .nombre-cell {
+        max-width: 120px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -57,9 +57,40 @@ export class DashboardComponent implements OnInit {
   totalItems = signal(0);
   isDark = this.themeService.isDark;
 
+  sidenavOpened = signal(true);
+  isMobile = signal(false);
+
   ngOnInit(): void {
+    this.checkScreenSize();
     this.loadFiguras();
     this.loadStats();
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkScreenSize();
+  }
+
+  private checkScreenSize(): void {
+    const wasMobile = this.isMobile();
+    this.isMobile.set(window.innerWidth < 768);
+    
+    // Auto-cerrar en móvil, auto-abrir en desktop
+    if (this.isMobile() && !wasMobile) {
+      this.sidenavOpened.set(false);
+    } else if (!this.isMobile() && wasMobile) {
+      this.sidenavOpened.set(true);
+    }
+  }
+
+  toggleSidenav(): void {
+    this.sidenavOpened.update(v => !v);
+  }
+
+  closeSidenavOnMobile(): void {
+    if (this.isMobile()) {
+      this.sidenavOpened.set(false);
+    }
   }
 
   loadFiguras(): void {
