@@ -13,6 +13,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { FiguraService } from '../../../core/services/figura.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ThemeService } from '../../../core/services/theme.service';
 import { Figura, FiguraStats } from '../../../core/models/figura.model';
 import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dialog.component';
 import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -42,6 +43,7 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
 export class DashboardComponent implements OnInit {
   private figuraService = inject(FiguraService);
   private authService = inject(AuthService);
+  private themeService = inject(ThemeService);
   private dialog = inject(MatDialog);
   private snackBar = inject(MatSnackBar);
 
@@ -53,6 +55,7 @@ export class DashboardComponent implements OnInit {
   currentPage = signal(1);
   pageSize = 20;
   totalItems = signal(0);
+  isDark = this.themeService.isDark;
 
   ngOnInit(): void {
     this.loadFiguras();
@@ -127,6 +130,10 @@ export class DashboardComponent implements OnInit {
         });
       }
     });
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   logout(): void {

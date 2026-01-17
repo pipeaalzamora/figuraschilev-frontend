@@ -25,15 +25,15 @@
 
 .image-upload-section label {
     display: block;
-    margin-bottom: 8px;
-    font-weight: 500;
-    color: rgba(0, 0, 0, 0.6);
-    font-size: 14px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 .upload-area {
-    border: 2px dashed #ccc;
-    border-radius: 8px;
+    border: 2px dashed var(--border-color);
+    border-radius: 12px;
     padding: 40px;
     text-align: center;
     cursor: pointer;
@@ -44,25 +44,25 @@
     justify-content: center;
     gap: 8px;
     position: relative;
-    background: #fafafa;
-    min-height: 150px;
+    background: var(--bg-tertiary);
+    min-height: 160px;
 }
 
 .upload-area:hover {
-    border-color: #667eea;
-    background: #f0f0ff;
+    border-color: var(--primary);
+    background: var(--bg-secondary);
 }
 
 .upload-area.drag-over {
-    border-color: #667eea;
-    background: #e8e8ff;
+    border-color: var(--primary);
+    background: var(--bg-secondary);
     border-style: solid;
 }
 
 .upload-area.has-image {
     padding: 0;
     border-style: solid;
-    border-color: #ddd;
+    border-color: var(--border-color);
 }
 
 .upload-area.has-image:hover .image-overlay {
@@ -80,7 +80,7 @@
     font-size: 48px;
     width: 48px;
     height: 48px;
-    color: #999;
+    color: var(--text-muted);
 }
 
 .upload-area.small mat-icon {
@@ -89,8 +89,13 @@
     height: 32px;
 }
 
+.upload-area span {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
 .upload-area small {
-    color: #999;
+    color: var(--text-muted);
     font-size: 12px;
 }
 
@@ -98,7 +103,7 @@
     width: 100%;
     height: 200px;
     object-fit: contain;
-    border-radius: 6px;
+    border-radius: 10px;
 }
 
 .image-overlay {
@@ -107,14 +112,14 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     opacity: 0;
     transition: opacity 0.2s;
-    border-radius: 6px;
+    border-radius: 10px;
     color: white;
 }
 
@@ -123,6 +128,10 @@
     font-size: 32px;
     width: 32px;
     height: 32px;
+}
+
+.image-overlay span {
+    color: white;
 }
 
 .additional-images {
@@ -141,14 +150,14 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 .remove-btn {
     position: absolute;
     top: -10px;
     right: -10px;
-    background: #f44336 !important;
+    background: var(--error) !important;
     color: white !important;
     width: 24px !important;
     height: 24px !important;
@@ -159,6 +168,7 @@
     font-size: 14px;
     width: 14px;
     height: 14px;
+    color: white !important;
 }
 
 mat-checkbox {
@@ -167,6 +177,47 @@ mat-checkbox {
 
 mat-progress-bar {
     margin-top: 8px;
+    border-radius: 4px;
+}
+
+mat-dialog-actions button {
+    border-radius: 8px;
+}
+
+/* Dialog title */
+h2[mat-dialog-title] {
+    color: var(--text-primary);
+}
+
+/* Dark mode specific */
+:host-context([data-theme="dark"]) h2[mat-dialog-title] {
+    color: #f0f0f5;
+}
+
+:host-context([data-theme="dark"]) .image-upload-section label {
+    color: #b0b0c0;
+}
+
+:host-context([data-theme="dark"]) .upload-area {
+    background: #16162a;
+    border-color: #2d2d4a;
+}
+
+:host-context([data-theme="dark"]) .upload-area:hover {
+    background: #1a1a2e;
+    border-color: #818cf8;
+}
+
+:host-context([data-theme="dark"]) .upload-area mat-icon {
+    color: #7b7b90;
+}
+
+:host-context([data-theme="dark"]) .upload-area span {
+    color: #b0b0c0;
+}
+
+:host-context([data-theme="dark"]) .upload-area small {
+    color: #7b7b90;
 }
 
 @media (max-width: 600px) {

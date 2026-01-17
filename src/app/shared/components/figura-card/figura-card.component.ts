@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { CommonModule, CurrencyPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -15,4 +15,10 @@ import { Figura } from '../../../core/models/figura.model';
 export class FiguraCardComponent {
   figura = input.required<Figura>();
   cardClick = output<Figura>();
+  
+  imageLoaded = signal(false);
+
+  onImageLoad(): void {
+    this.imageLoaded.set(true);
+  }
 }

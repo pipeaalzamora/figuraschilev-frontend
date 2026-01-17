@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import { FiguraCardComponent } from '../../shared/components/figura-card/figura-card.component';
 import { FiguraDetailDialogComponent } from '../../shared/components/figura-detail-dialog/figura-detail-dialog.component';
 import { FiguraService } from '../../core/services/figura.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { Figura } from '../../core/models/figura.model';
 import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
@@ -36,6 +37,7 @@ import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 })
 export class GalleryComponent implements OnInit {
   private figuraService = inject(FiguraService);
+  private themeService = inject(ThemeService);
   private dialog = inject(MatDialog);
   private platformId = inject(PLATFORM_ID);
 
@@ -46,6 +48,7 @@ export class GalleryComponent implements OnInit {
   pageSize = 20;
   totalItems = 0;
   hasMore = signal(false);
+  isDark = this.themeService.isDark;
 
   private searchSubject = new Subject<string>();
 
@@ -92,6 +95,10 @@ export class GalleryComponent implements OnInit {
   loadMore(): void {
     this.currentPage++;
     this.loadFiguras(this.searchTerm);
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
   }
 
   openDetail(figura: Figura): void {

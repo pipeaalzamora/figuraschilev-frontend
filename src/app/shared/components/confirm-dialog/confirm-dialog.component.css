@@ -1,14 +1,41 @@
 h2 {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    color: var(--text-primary);
 }
 
-mat-icon {
-    color: #f44336;
+h2 mat-icon {
+    color: var(--error);
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
 }
 
-p {
+mat-dialog-content {
+    color: var(--text-secondary);
+}
+
+mat-dialog-content p {
     margin: 0;
     font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+mat-dialog-actions {
+    padding-top: 16px;
+}
+
+mat-dialog-actions button {
+    border-radius: 8px;
+}
+
+/* Dark mode specific */
+:host-context([data-theme="dark"]) h2 {
+    color: #f0f0f5;
+}
+
+:host-context([data-theme="dark"]) mat-dialog-content p {
+    color: #b0b0c0;
 }

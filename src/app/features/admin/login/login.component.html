@@ -1,4 +1,8 @@
 <div class="login-container">
+    <button mat-icon-button class="theme-toggle" (click)="toggleTheme()" aria-label="Cambiar tema">
+        <mat-icon>{{ isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
     <mat-card class="login-card">
         <mat-card-header>
             <mat-card-title>

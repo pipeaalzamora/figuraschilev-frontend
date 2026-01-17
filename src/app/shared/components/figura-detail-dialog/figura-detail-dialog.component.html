@@ -1,16 +1,25 @@
-<div class="dialog-container">
+<div class="dialog-container scale-in">
     <button mat-icon-button class="close-btn" (click)="close()">
         <mat-icon>close</mat-icon>
     </button>
 
     <div class="gallery-section">
-        <img [src]="currentImage" [alt]="data.nombre" loading="lazy" class="main-image" />
+        <div class="main-image-container" (click)="openLightbox()">
+            @if (!imageLoaded()) {
+            <div class="skeleton main-image-skeleton"></div>
+            }
+            <img [src]="currentImage()" [alt]="data.nombre" class="main-image" [class.loaded]="imageLoaded()"
+                (load)="onImageLoad()" />
+            <div class="zoom-hint">
+                <mat-icon>zoom_in</mat-icon>
+            </div>
+        </div>
 
         @if (allImages.length > 1) {
         <div class="thumbnails">
             @for (img of allImages; track img; let i = $index) {
-            <img [src]="img" [alt]="'Imagen ' + (i + 1)" [class.active]="img === currentImage"
-                (click)="currentImage = img" loading="lazy" class="thumbnail" />
+            <img [src]="img" [alt]="'Imagen ' + (i + 1)" [class.active]="img === currentImage()"
+                (click)="selectImage(img, i)" loading="lazy" class="thumbnail" />
             }
         </div>
         }
@@ -24,15 +33,19 @@
         </div>
 
         <mat-dialog-content>
+            @if (data.descripcionLarga) {
             <div class="info-block">
                 <h4>Descripción</h4>
                 <p>{{ data.descripcionLarga }}</p>
             </div>
+            }
 
+            @if (data.historia) {
             <div class="info-block">
                 <h4>Historia</h4>
                 <p>{{ data.historia }}</p>
             </div>
+            }
 
             <div class="meta-info">
                 <mat-chip-set>
