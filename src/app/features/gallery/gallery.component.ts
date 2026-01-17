@@ -1,26 +1,33 @@
 import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { RouterLink } from '@angular/router';
 import { FiguraCardComponent } from '../../shared/components/figura-card/figura-card.component';
 import { FiguraDetailDialogComponent } from '../../shared/components/figura-detail-dialog/figura-detail-dialog.component';
 import { FiguraService } from '../../core/services/figura.service';
 import { Figura } from '../../core/models/figura.model';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 @Component({
   selector: 'app-gallery',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
     MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatInputModule,
     RouterLink,
     FiguraCardComponent
   ],
@@ -44,7 +51,21 @@ import { Figura } from '../../core/models/figura.model';
 
       <!-- Gallery Grid -->
       <main class="gallery-main">
-        @if (loading()) {
+        <!-- Search -->
+        <div class="search-container">
+          <mat-form-field appearance="outline" class="search-field">
+            <mat-label>Buscar figura</mat-label>
+            <input 
+              matInput 
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="onSearchChange($event)"
+              placeholder="Escribe el nombre..."
+            />
+            <mat-icon matSuffix>search</mat-icon>
+          </mat-form-field>
+        </div>
+
+        @if (loading() && figuras().length === 0) {
           <div class="loading-container">
             <mat-spinner diameter="50"></mat-spinner>
             <p>Cargando colección...</p>
@@ -52,8 +73,13 @@ import { Figura } from '../../core/models/figura.model';
         } @else if (figuras().length === 0) {
           <div class="empty-state">
             <mat-icon>collections</mat-icon>
-            <h3>Aún no hay figuras</h3>
-            <p>Pronto agregaré mis tesoros de las ferias</p>
+            @if (searchTerm) {
+              <h3>Sin resultados</h3>
+              <p>No encontré figuras con "{{ searchTerm }}"</p>
+            } @else {
+              <h3>Aún no hay figuras</h3>
+              <p>Pronto agregaré mis tesoros de las ferias</p>
+            }
           </div>
         } @else {
           <div class="cards-grid">
@@ -64,6 +90,18 @@ import { Figura } from '../../core/models/figura.model';
               />
             }
           </div>
+
+          @if (hasMore()) {
+            <div class="load-more">
+              <button mat-raised-button color="primary" (click)="loadMore()" [disabled]="loading()">
+                @if (loading()) {
+                  <mat-spinner diameter="20"></mat-spinner>
+                } @else {
+                  Cargar más
+                }
+              </button>
+            </div>
+          }
         }
       </main>
 
@@ -119,6 +157,15 @@ import { Figura } from '../../core/models/figura.model';
       border-radius: 30px 30px 0 0;
     }
 
+    .search-container {
+      max-width: 500px;
+      margin: 0 auto 30px;
+    }
+
+    .search-field {
+      width: 100%;
+    }
+
     .cards-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -146,6 +193,16 @@ import { Figura } from '../../core/models/figura.model';
 
     .empty-state h3 {
       margin: 16px 0 8px;
+    }
+
+    .load-more {
+      display: flex;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .load-more mat-spinner {
+      display: inline-block;
     }
 
     .footer {
@@ -191,29 +248,57 @@ export class GalleryComponent implements OnInit {
 
   figuras = signal<Figura[]>([]);
   loading = signal(true);
+  searchTerm = '';
+  currentPage = 1;
+  pageSize = 20;
+  totalItems = 0;
+  hasMore = signal(false);
+
+  private searchSubject = new Subject<string>();
 
   ngOnInit(): void {
-    // Only make HTTP calls on the browser, not during SSR
     if (isPlatformBrowser(this.platformId)) {
       this.loadFiguras();
+      
+      this.searchSubject.pipe(
+        debounceTime(400),
+        distinctUntilChanged()
+      ).subscribe(term => {
+        this.currentPage = 1;
+        this.figuras.set([]);
+        this.loadFiguras(term);
+      });
     } else {
       this.loading.set(false);
     }
   }
 
-  loadFiguras(): void {
+  loadFiguras(search = ''): void {
     this.loading.set(true);
-    this.figuraService.getAll().subscribe({
-      next: (data) => {
-        this.figuras.set(data);
+    this.figuraService.getAll(this.currentPage, this.pageSize, search, true).subscribe({
+      next: (response) => {
+        if (this.currentPage === 1) {
+          this.figuras.set(response.data);
+        } else {
+          this.figuras.update(current => [...current, ...response.data]);
+        }
+        this.totalItems = response.total;
+        this.hasMore.set(this.figuras().length < response.total);
         this.loading.set(false);
       },
       error: () => {
         this.loading.set(false);
-        // Por ahora cargamos datos de ejemplo
-        this.figuras.set(this.getMockData());
       }
     });
+  }
+
+  onSearchChange(term: string): void {
+    this.searchSubject.next(term);
+  }
+
+  loadMore(): void {
+    this.currentPage++;
+    this.loadFiguras(this.searchTerm);
   }
 
   openDetail(figura: Figura): void {
@@ -223,56 +308,5 @@ export class GalleryComponent implements OnInit {
       maxHeight: '95vh',
       panelClass: 'figura-detail-dialog'
     });
-  }
-
-  // Datos de ejemplo mientras no hay backend
-  private getMockData(): Figura[] {
-    return [
-      {
-        _id: '1',
-        nombre: 'Goku Super Saiyan',
-        descripcionCorta: 'Figura de Goku en su transformación más icónica',
-        descripcionLarga: 'Figura de colección de Goku en su forma Super Saiyan. Excelente estado, con base incluida. Aproximadamente 18cm de altura.',
-        precio: 15000,
-        imagenPrincipal: 'https://via.placeholder.com/400x400/667eea/ffffff?text=Goku+SSJ',
-        imagenesAdicionales: [
-          'https://via.placeholder.com/400x400/764ba2/ffffff?text=Goku+2',
-          'https://via.placeholder.com/400x400/f093fb/ffffff?text=Goku+3'
-        ],
-        historia: 'Encontré esta figura en la feria de las pulgas del Persa Bio Bio. El vendedor la tenía escondida entre otras cosas, pero la vi de inmediato.',
-        fechaCompra: new Date('2024-03-15'),
-        lugarCompra: 'Persa Bio Bio',
-        categoria: 'Anime',
-        destacado: true
-      },
-      {
-        _id: '2',
-        nombre: 'Spider-Man Classic',
-        descripcionCorta: 'El amigable vecino en pose clásica',
-        descripcionLarga: 'Figura vintage de Spider-Man de los años 90. Articulaciones móviles y pintura original en buen estado.',
-        precio: 8000,
-        imagenPrincipal: 'https://via.placeholder.com/400x400/e91e63/ffffff?text=Spiderman',
-        imagenesAdicionales: [],
-        historia: 'Esta la conseguí en un remate de juguetes antiguos. Me recordó a mi infancia.',
-        fechaCompra: new Date('2024-02-20'),
-        lugarCompra: 'Feria Santa Lucía',
-        categoria: 'Comics'
-      },
-      {
-        _id: '3',
-        nombre: 'Pikachu Vintage',
-        descripcionCorta: 'Pikachu de primera generación',
-        descripcionLarga: 'Peluche original de Pikachu de la primera ola de Pokémon en Chile. Etiqueta original incluida.',
-        precio: 12000,
-        imagenPrincipal: 'https://via.placeholder.com/400x400/ffc107/000000?text=Pikachu',
-        imagenesAdicionales: [
-          'https://via.placeholder.com/400x400/ffeb3b/000000?text=Pikachu+2'
-        ],
-        historia: 'Un clásico de los 90s. Lo encontré en perfectas condiciones en una venta de garage.',
-        fechaCompra: new Date('2024-01-10'),
-        lugarCompra: 'Venta de garage Ñuñoa',
-        categoria: 'Pokémon'
-      }
-    ];
   }
 }

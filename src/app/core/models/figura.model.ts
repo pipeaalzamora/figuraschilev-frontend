@@ -28,3 +28,16 @@ export interface FiguraCreate {
   categoria?: string;
   destacado?: boolean;
 }
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface FiguraStats {
+  totalFiguras: number;
+  totalInvertido: number;
+}

@@ -1,5 +1,5 @@
-import { Component, inject, signal, OnInit, PLATFORM_ID } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe, isPlatformBrowser } from '@angular/common';
+import { Component, inject, signal, OnInit } from '@angular/core';
+import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
@@ -9,11 +9,13 @@ import { MatTableModule } from '@angular/material/table';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { RouterLink } from '@angular/router';
 import { FiguraService } from '../../../core/services/figura.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Figura } from '../../../core/models/figura.model';
+import { Figura, FiguraStats } from '../../../core/models/figura.model';
 import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dialog.component';
+import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-dashboard',
@@ -29,6 +31,7 @@ import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dial
     MatDialogModule,
     MatSnackBarModule,
     MatMenuModule,
+    MatPaginatorModule,
     RouterLink,
     CurrencyPipe,
     DatePipe
@@ -73,14 +76,14 @@ import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dial
             <div class="stat-card">
               <mat-icon>collections</mat-icon>
               <div class="stat-info">
-                <span class="stat-value">{{ figuras().length }}</span>
+                <span class="stat-value">{{ stats().totalFiguras }}</span>
                 <span class="stat-label">Total Figuras</span>
               </div>
             </div>
             <div class="stat-card">
               <mat-icon>attach_money</mat-icon>
               <div class="stat-info">
-                <span class="stat-value">{{ totalInvertido() | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
+                <span class="stat-value">{{ stats().totalInvertido | currency:'CLP':'symbol-narrow':'1.0-0' }}</span>
                 <span class="stat-label">Total Invertido</span>
               </div>
             </div>
@@ -91,7 +94,7 @@ import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dial
               <ng-container matColumnDef="imagen">
                 <th mat-header-cell *matHeaderCellDef>Imagen</th>
                 <td mat-cell *matCellDef="let figura">
-                  <img [src]="figura.imagenPrincipal" [alt]="figura.nombre" class="table-image" />
+                  <img [src]="figura.imagenPrincipal" [alt]="figura.nombre" loading="lazy" class="table-image" />
                 </td>
               </ng-container>
 
@@ -137,7 +140,7 @@ import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dial
               <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
             </table>
 
-            @if (figuras().length === 0) {
+            @if (figuras().length === 0 && !loading()) {
               <div class="empty-table">
                 <mat-icon>inbox</mat-icon>
                 <p>No hay figuras registradas</p>
@@ -146,6 +149,15 @@ import { FiguraFormDialogComponent } from './figura-form-dialog/figura-form-dial
                 </button>
               </div>
             }
+
+            <mat-paginator
+              [length]="totalItems()"
+              [pageSize]="pageSize"
+              [pageIndex]="currentPage() - 1"
+              [pageSizeOptions]="[10, 20, 50]"
+              (page)="onPageChange($event)"
+              showFirstLastButtons
+            />
           </div>
         </div>
       </mat-sidenav-content>
@@ -298,31 +310,43 @@ export class DashboardComponent implements OnInit {
   private snackBar = inject(MatSnackBar);
 
   figuras = signal<Figura[]>([]);
+  stats = signal<FiguraStats>({ totalFiguras: 0, totalInvertido: 0 });
   displayedColumns = ['imagen', 'nombre', 'precio', 'fecha', 'acciones'];
-
-  totalInvertido = signal(0);
+  
+  loading = signal(false);
+  currentPage = signal(1);
+  pageSize = 20;
+  totalItems = signal(0);
 
   ngOnInit(): void {
     this.loadFiguras();
+    this.loadStats();
   }
 
   loadFiguras(): void {
-    this.figuraService.getAll().subscribe({
-      next: (data) => {
-        this.figuras.set(data);
-        this.calculateTotal();
+    this.loading.set(true);
+    this.figuraService.getAll(this.currentPage(), this.pageSize).subscribe({
+      next: (response) => {
+        this.figuras.set(response.data);
+        this.totalItems.set(response.total);
+        this.loading.set(false);
       },
       error: () => {
-        // Datos de ejemplo
-        this.figuras.set(this.getMockData());
-        this.calculateTotal();
+        this.loading.set(false);
       }
     });
   }
 
-  calculateTotal(): void {
-    const total = this.figuras().reduce((sum, f) => sum + f.precio, 0);
-    this.totalInvertido.set(total);
+  loadStats(): void {
+    this.figuraService.getStats().subscribe({
+      next: (stats) => this.stats.set(stats)
+    });
+  }
+
+  onPageChange(event: PageEvent): void {
+    this.currentPage.set(event.pageIndex + 1);
+    this.pageSize = event.pageSize;
+    this.loadFiguras();
   }
 
   openForm(figura?: Figura): void {
@@ -335,6 +359,7 @@ export class DashboardComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.loadFiguras();
+        this.loadStats();
         this.snackBar.open(
           figura ? 'Figura actualizada' : 'Figura creada',
           'OK',
@@ -345,54 +370,30 @@ export class DashboardComponent implements OnInit {
   }
 
   deleteFigura(figura: Figura): void {
-    if (confirm(`¿Eliminar "${figura.nombre}"?`)) {
-      this.figuraService.delete(figura._id!).subscribe({
-        next: () => {
-          this.loadFiguras();
-          this.snackBar.open('Figura eliminada', 'OK', { duration: 3000 });
-        },
-        error: () => {
-          // Mock delete
-          this.figuras.update(list => list.filter(f => f._id !== figura._id));
-          this.calculateTotal();
-          this.snackBar.open('Figura eliminada', 'OK', { duration: 3000 });
-        }
-      });
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      width: '400px',
+      data: {
+        title: 'Eliminar figura',
+        message: `¿Estás seguro de eliminar "${figura.nombre}"?`,
+        confirmText: 'Eliminar',
+        cancelText: 'Cancelar'
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(confirmed => {
+      if (confirmed) {
+        this.figuraService.delete(figura._id!).subscribe({
+          next: () => {
+            this.loadFiguras();
+            this.loadStats();
+            this.snackBar.open('Figura eliminada', 'OK', { duration: 3000 });
+          }
+        });
+      }
+    });
   }
 
   logout(): void {
     this.authService.logout();
-  }
-
-  private getMockData(): Figura[] {
-    return [
-      {
-        _id: '1',
-        nombre: 'Goku Super Saiyan',
-        descripcionCorta: 'Figura de Goku en su transformación más icónica',
-        descripcionLarga: 'Figura de colección de Goku en su forma Super Saiyan.',
-        precio: 15000,
-        imagenPrincipal: 'https://via.placeholder.com/100x100/667eea/ffffff?text=Goku',
-        imagenesAdicionales: [],
-        historia: 'Encontré esta figura en la feria.',
-        fechaCompra: new Date('2024-03-15'),
-        lugarCompra: 'Persa Bio Bio',
-        categoria: 'Anime'
-      },
-      {
-        _id: '2',
-        nombre: 'Spider-Man Classic',
-        descripcionCorta: 'El amigable vecino',
-        descripcionLarga: 'Figura vintage de Spider-Man.',
-        precio: 8000,
-        imagenPrincipal: 'https://via.placeholder.com/100x100/e91e63/ffffff?text=Spidey',
-        imagenesAdicionales: [],
-        historia: 'Remate de juguetes.',
-        fechaCompra: new Date('2024-02-20'),
-        lugarCompra: 'Feria Santa Lucía',
-        categoria: 'Comics'
-      }
-    ];
   }
 }

@@ -15,6 +15,7 @@ import { Figura } from '../../../core/models/figura.model';
         mat-card-image 
         [src]="figura().imagenPrincipal" 
         [alt]="figura().nombre"
+        loading="lazy"
         class="figura-image"
       />
       <mat-card-content>

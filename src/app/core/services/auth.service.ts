@@ -1,40 +1,48 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Observable, tap, catchError, of, map } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
+
   private readonly isAuthenticated = signal(false);
-  
   readonly isLoggedIn = this.isAuthenticated.asReadonly();
 
-  constructor(private router: Router) {
-    // Verificar si hay sesión guardada
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('admin_token');
-      this.isAuthenticated.set(!!token);
-    }
+  constructor() {
+    this.checkAuth();
   }
 
-  login(password: string): boolean {
-    // Por ahora usamos una contraseña simple
-    // TODO: Implementar autenticación real con backend
-    if (password === 'figuras2024') {
-      this.isAuthenticated.set(true);
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('admin_token', 'authenticated');
-      }
-      return true;
-    }
-    return false;
+  private checkAuth(): void {
+    if (typeof window === 'undefined') return;
+    
+    this.http.get(`${this.apiUrl}/check`).pipe(
+      catchError(() => of(null))
+    ).subscribe(response => {
+      this.isAuthenticated.set(!!response);
+    });
+  }
+
+  login(password: string): Observable<boolean> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/login`, { password }).pipe(
+      tap(() => this.isAuthenticated.set(true)),
+      map(() => true),
+      catchError(() => of(false))
+    );
   }
 
   logout(): void {
-    this.isAuthenticated.set(false);
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('admin_token');
-    }
-    this.router.navigate(['/']);
+    this.http.post(`${this.apiUrl}/logout`, {}).subscribe({
+      complete: () => {
+        this.isAuthenticated.set(false);
+        this.router.navigate(['/']);
+      }
+    });
   }
 }

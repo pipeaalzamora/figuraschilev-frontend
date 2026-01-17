@@ -25,7 +25,7 @@ import { Figura } from '../../../core/models/figura.model';
       </button>
 
       <div class="gallery-section">
-        <img [src]="currentImage" [alt]="data.nombre" class="main-image" />
+        <img [src]="currentImage" [alt]="data.nombre" loading="lazy" class="main-image" />
         
         @if (allImages.length > 1) {
           <div class="thumbnails">
@@ -35,6 +35,7 @@ import { Figura } from '../../../core/models/figura.model';
                 [alt]="'Imagen ' + (i + 1)"
                 [class.active]="img === currentImage"
                 (click)="currentImage = img"
+                loading="lazy"
                 class="thumbnail"
               />
             }

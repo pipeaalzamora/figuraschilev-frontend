@@ -10,6 +10,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { FiguraService } from '../../../../core/services/figura.service';
 import { Figura } from '../../../../core/models/figura.model';
 
@@ -27,7 +28,8 @@ import { Figura } from '../../../../core/models/figura.model';
     MatDatepickerModule,
     MatNativeDateModule,
     MatSelectModule,
-    MatCheckboxModule
+    MatCheckboxModule,
+    MatProgressBarModule
   ],
   template: `
     <h2 mat-dialog-title>
@@ -90,17 +92,56 @@ import { Figura } from '../../../../core/models/figura.model';
           </mat-form-field>
         </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>URL Imagen Principal</mat-label>
-          <input matInput formControlName="imagenPrincipal" placeholder="https://..." />
-          <mat-icon matSuffix>image</mat-icon>
-        </mat-form-field>
+        <!-- Imagen Principal -->
+        <div class="image-upload-section">
+          <label>Imagen Principal</label>
+          <div class="upload-area" (click)="mainImageInput.click()">
+            @if (mainImagePreview()) {
+              <img [src]="mainImagePreview()" alt="Preview" class="preview-image" />
+            } @else {
+              <mat-icon>cloud_upload</mat-icon>
+              <span>Click para subir imagen</span>
+            }
+          </div>
+          <input 
+            #mainImageInput 
+            type="file" 
+            accept="image/*" 
+            hidden 
+            (change)="onMainImageSelect($event)"
+          />
+          @if (uploadingMain()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          }
+        </div>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>URLs Imágenes Adicionales (separadas por coma)</mat-label>
-          <textarea matInput formControlName="imagenesAdicionales" rows="2" placeholder="url1, url2, url3"></textarea>
-          <mat-hint>Separa cada URL con una coma</mat-hint>
-        </mat-form-field>
+        <!-- Imágenes Adicionales -->
+        <div class="image-upload-section">
+          <label>Imágenes Adicionales</label>
+          <div class="additional-images">
+            @for (img of additionalPreviews(); track img; let i = $index) {
+              <div class="additional-image-item">
+                <img [src]="img" alt="Adicional" />
+                <button mat-icon-button (click)="removeAdditionalImage(i)" type="button">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+            }
+            <div class="upload-area small" (click)="additionalImageInput.click()">
+              <mat-icon>add_photo_alternate</mat-icon>
+            </div>
+          </div>
+          <input 
+            #additionalImageInput 
+            type="file" 
+            accept="image/*" 
+            hidden 
+            (change)="onAdditionalImageSelect($event)"
+          />
+          @if (uploadingAdditional()) {
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+          }
+        </div>
 
         <mat-checkbox formControlName="destacado">Marcar como destacada</mat-checkbox>
       </form>
@@ -111,7 +152,7 @@ import { Figura } from '../../../../core/models/figura.model';
       <button 
         mat-raised-button 
         color="primary" 
-        [disabled]="form.invalid || saving()"
+        [disabled]="form.invalid || saving() || uploadingMain() || uploadingAdditional()"
         (click)="save()"
       >
         {{ saving() ? 'Guardando...' : 'Guardar' }}
@@ -139,6 +180,95 @@ import { Figura } from '../../../../core/models/figura.model';
       flex: 1;
     }
 
+    .image-upload-section {
+      margin: 16px 0;
+    }
+
+    .image-upload-section label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .upload-area {
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .upload-area:hover {
+      border-color: #667eea;
+    }
+
+    .upload-area.small {
+      padding: 20px;
+      width: 80px;
+      height: 80px;
+    }
+
+    .upload-area mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      color: #999;
+    }
+
+    .upload-area.small mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+    }
+
+    .preview-image {
+      max-width: 200px;
+      max-height: 200px;
+      object-fit: contain;
+    }
+
+    .additional-images {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .additional-image-item {
+      position: relative;
+      width: 80px;
+      height: 80px;
+    }
+
+    .additional-image-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .additional-image-item button {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #f44336;
+      color: white;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+    }
+
+    .additional-image-item button mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
     mat-checkbox {
       margin-top: 8px;
     }
@@ -163,11 +293,21 @@ export class FiguraFormDialogComponent implements OnInit {
 
   form!: FormGroup;
   saving = signal(false);
+  uploadingMain = signal(false);
+  uploadingAdditional = signal(false);
   isEditing = false;
+
+  mainImagePreview = signal<string>('');
+  additionalPreviews = signal<string[]>([]);
 
   ngOnInit(): void {
     this.isEditing = !!this.data;
     this.initForm();
+
+    if (this.data) {
+      this.mainImagePreview.set(this.data.imagenPrincipal);
+      this.additionalPreviews.set([...this.data.imagenesAdicionales]);
+    }
   }
 
   initForm(): void {
@@ -181,23 +321,55 @@ export class FiguraFormDialogComponent implements OnInit {
       lugarCompra: [this.data?.lugarCompra || '', Validators.required],
       categoria: [this.data?.categoria || ''],
       imagenPrincipal: [this.data?.imagenPrincipal || '', Validators.required],
-      imagenesAdicionales: [this.data?.imagenesAdicionales?.join(', ') || ''],
+      imagenesAdicionales: [this.data?.imagenesAdicionales || []],
       destacado: [this.data?.destacado || false]
     });
+  }
+
+  onMainImageSelect(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    this.uploadingMain.set(true);
+    this.figuraService.uploadImage(file).subscribe({
+      next: (response) => {
+        this.mainImagePreview.set(response.url);
+        this.form.patchValue({ imagenPrincipal: response.url });
+        this.uploadingMain.set(false);
+      },
+      error: () => {
+        this.uploadingMain.set(false);
+      }
+    });
+  }
+
+  onAdditionalImageSelect(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+
+    this.uploadingAdditional.set(true);
+    this.figuraService.uploadImage(file).subscribe({
+      next: (response) => {
+        this.additionalPreviews.update(current => [...current, response.url]);
+        this.form.patchValue({ imagenesAdicionales: this.additionalPreviews() });
+        this.uploadingAdditional.set(false);
+      },
+      error: () => {
+        this.uploadingAdditional.set(false);
+      }
+    });
+  }
+
+  removeAdditionalImage(index: number): void {
+    this.additionalPreviews.update(current => current.filter((_, i) => i !== index));
+    this.form.patchValue({ imagenesAdicionales: this.additionalPreviews() });
   }
 
   save(): void {
     if (this.form.invalid) return;
 
     this.saving.set(true);
-    const formValue = this.form.value;
-
-    const figura = {
-      ...formValue,
-      imagenesAdicionales: formValue.imagenesAdicionales
-        ? formValue.imagenesAdicionales.split(',').map((url: string) => url.trim()).filter(Boolean)
-        : []
-    };
+    const figura = this.form.value;
 
     const request = this.isEditing
       ? this.figuraService.update(this.data!._id!, figura)
@@ -208,8 +380,7 @@ export class FiguraFormDialogComponent implements OnInit {
         this.dialogRef.close(true);
       },
       error: () => {
-        // Mock success para desarrollo
-        this.dialogRef.close(true);
+        this.saving.set(false);
       }
     });
   }

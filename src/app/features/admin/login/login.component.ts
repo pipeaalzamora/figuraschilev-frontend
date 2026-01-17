@@ -66,9 +66,9 @@ import { AuthService } from '../../../core/services/auth.service';
               color="primary" 
               type="submit"
               class="full-width"
-              [disabled]="!password"
+              [disabled]="!password || loading()"
             >
-              Ingresar
+              {{ loading() ? 'Ingresando...' : 'Ingresar' }}
             </button>
           </form>
         </mat-card-content>
@@ -138,12 +138,19 @@ export class LoginComponent {
   password = '';
   hidePassword = signal(true);
   error = signal('');
+  loading = signal(false);
 
   onLogin(): void {
-    if (this.authService.login(this.password)) {
-      this.router.navigate(['/admin/dashboard']);
-    } else {
-      this.error.set('Contraseña incorrecta');
-    }
+    this.loading.set(true);
+    this.error.set('');
+    
+    this.authService.login(this.password).subscribe(success => {
+      this.loading.set(false);
+      if (success) {
+        this.router.navigate(['/admin/dashboard']);
+      } else {
+        this.error.set('Contraseña incorrecta');
+      }
+    });
   }
 }
