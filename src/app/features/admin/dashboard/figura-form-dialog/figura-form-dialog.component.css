@@ -23,29 +23,123 @@
     margin: 16px 0;
 }
 
-.image-upload-section label {
+.image-upload-section>label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
 
+.images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.image-item {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    cursor: grab;
+    border: 2px solid var(--border-color);
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.image-item:active {
+    cursor: grabbing;
+}
+
+.image-item.is-main {
+    border-color: var(--primary);
+}
+
+.image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.main-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    background: var(--primary);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.image-actions {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.image-item:hover .image-actions {
+    opacity: 1;
+}
+
+.move-btn {
+    background: rgba(255, 193, 7, 0.9) !important;
+    color: white !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.move-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: white !important;
+}
+
+.remove-btn {
+    background: rgba(244, 67, 54, 0.9) !important;
+    color: white !important;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.remove-btn mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: white !important;
+}
+
+.upload-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .upload-area {
+    aspect-ratio: 1;
     border: 2px dashed var(--border-color);
     border-radius: 12px;
-    padding: 40px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    position: relative;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
     background: var(--bg-tertiary);
-    min-height: 160px;
+    min-height: 100px;
 }
 
 .upload-area:hover {
@@ -59,125 +153,27 @@
     border-style: solid;
 }
 
-.upload-area.has-image {
-    padding: 0;
-    border-style: solid;
-    border-color: var(--border-color);
-}
-
-.upload-area.has-image:hover .image-overlay {
-    opacity: 1;
-}
-
-.upload-area.small {
-    padding: 0;
-    width: 80px;
-    height: 80px;
-    min-height: 80px;
-}
-
 .upload-area mat-icon {
-    font-size: 48px;
-    width: 48px;
-    height: 48px;
-    color: var(--text-muted);
-}
-
-.upload-area.small mat-icon {
     font-size: 32px;
     width: 32px;
     height: 32px;
+    color: var(--text-muted);
 }
 
 .upload-area span {
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    font-weight: 500;
 }
 
-.upload-area small {
+.hint {
+    display: block;
+    margin-top: 8px;
     color: var(--text-muted);
-    font-size: 12px;
-}
-
-.preview-image {
-    width: 100%;
-    height: 200px;
-    object-fit: contain;
-    border-radius: 10px;
-}
-
-.image-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.2s;
-    border-radius: 10px;
-    color: white;
-}
-
-.image-overlay mat-icon {
-    color: white;
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
-}
-
-.image-overlay span {
-    color: white;
-}
-
-.additional-images {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.additional-image-item {
-    position: relative;
-    width: 80px;
-    height: 80px;
-}
-
-.additional-image-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 10px;
-}
-
-.remove-btn {
-    position: absolute;
-    top: -10px;
-    right: -10px;
-    background: var(--error) !important;
-    color: white !important;
-    width: 24px !important;
-    height: 24px !important;
-    line-height: 24px !important;
-}
-
-.remove-btn mat-icon {
-    font-size: 14px;
-    width: 14px;
-    height: 14px;
-    color: white !important;
+    font-size: 0.75rem;
 }
 
 mat-checkbox {
     margin-top: 8px;
-}
-
-mat-progress-bar {
-    margin-top: 8px;
-    border-radius: 4px;
 }
 
 mat-dialog-actions button {
@@ -189,12 +185,12 @@ h2[mat-dialog-title] {
     color: var(--text-primary);
 }
 
-/* Dark mode specific */
+/* Dark mode */
 :host-context([data-theme="dark"]) h2[mat-dialog-title] {
     color: #f0f0f5;
 }
 
-:host-context([data-theme="dark"]) .image-upload-section label {
+:host-context([data-theme="dark"]) .image-upload-section>label {
     color: #b0b0c0;
 }
 
@@ -216,7 +212,15 @@ h2[mat-dialog-title] {
     color: #b0b0c0;
 }
 
-:host-context([data-theme="dark"]) .upload-area small {
+:host-context([data-theme="dark"]) .image-item {
+    border-color: #2d2d4a;
+}
+
+:host-context([data-theme="dark"]) .image-item.is-main {
+    border-color: #818cf8;
+}
+
+:host-context([data-theme="dark"]) .hint {
     color: #7b7b90;
 }
 
@@ -228,5 +232,9 @@ h2[mat-dialog-title] {
     .row {
         flex-direction: column;
         gap: 8px;
+    }
+
+    .images-grid {
+        grid-template-columns: repeat(3, 1fr);
     }
 }

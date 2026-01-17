@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -11,8 +11,15 @@ import { provideNativeDateAdapter } from '@angular/material/core';
 import { MatSelectModule } from '@angular/material/select';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FiguraService } from '../../../../core/services/figura.service';
 import { Figura } from '../../../../core/models/figura.model';
+
+interface ImagePreview {
+  id: string;
+  url: string;
+  uploading: boolean;
+}
 
 @Component({
   selector: 'app-figura-form-dialog',
@@ -28,7 +35,8 @@ import { Figura } from '../../../../core/models/figura.model';
     MatDatepickerModule,
     MatSelectModule,
     MatCheckboxModule,
-    MatProgressBarModule
+    MatProgressBarModule,
+    MatProgressSpinnerModule
   ],
   providers: [provideNativeDateAdapter()],
   templateUrl: './figura-form-dialog.component.html',
@@ -42,25 +50,29 @@ export class FiguraFormDialogComponent implements OnInit {
 
   form!: FormGroup;
   saving = signal(false);
-  uploadingMain = signal(false);
-  uploadingAdditional = signal(false);
   isEditing = false;
 
-  mainImagePreview = signal<string>('');
-  additionalPreviews = signal<string[]>([]);
-  
-  isDraggingMain = signal(false);
-  isDraggingAdditional = signal(false);
+  imagePreviews = signal<ImagePreview[]>([]);
+  isDragging = signal(false);
+  draggedIndex: number | null = null;
 
   precioFormateado = signal<string>('');
+
+  isUploading = computed(() => this.imagePreviews().some(img => img.uploading));
 
   ngOnInit(): void {
     this.isEditing = !!this.data;
     this.initForm();
 
     if (this.data) {
-      this.mainImagePreview.set(this.data.imagenPrincipal);
-      this.additionalPreviews.set([...this.data.imagenesAdicionales]);
+      const images: ImagePreview[] = [];
+      if (this.data.imagenPrincipal) {
+        images.push({ id: this.generateId(), url: this.data.imagenPrincipal, uploading: false });
+      }
+      this.data.imagenesAdicionales.forEach(url => {
+        images.push({ id: this.generateId(), url, uploading: false });
+      });
+      this.imagePreviews.set(images);
       this.precioFormateado.set(this.formatNumber(this.data.precio));
     }
   }
@@ -68,17 +80,18 @@ export class FiguraFormDialogComponent implements OnInit {
   initForm(): void {
     this.form = this.fb.group({
       nombre: [this.data?.nombre || '', Validators.required],
-      descripcionCorta: [this.data?.descripcionCorta || '', Validators.required],
       descripcionLarga: [this.data?.descripcionLarga || ''],
       historia: [this.data?.historia || ''],
       precio: [this.data?.precio || 0, [Validators.required, Validators.min(0)]],
       fechaCompra: [this.data?.fechaCompra ? new Date(this.data.fechaCompra) : new Date(), Validators.required],
       lugarCompra: [this.data?.lugarCompra || '', Validators.required],
       categoria: [this.data?.categoria || ''],
-      imagenPrincipal: [this.data?.imagenPrincipal || '', Validators.required],
-      imagenesAdicionales: [this.data?.imagenesAdicionales || []],
       destacado: [this.data?.destacado || false]
     });
+  }
+
+  generateId(): string {
+    return Math.random().toString(36).substring(2, 9);
   }
 
   formatNumber(value: number): string {
@@ -94,42 +107,63 @@ export class FiguraFormDialogComponent implements OnInit {
     this.precioFormateado.set(this.formatNumber(numericValue));
   }
 
-  onDragOver(event: DragEvent, type: 'main' | 'additional'): void {
+  onDragOver(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    if (type === 'main') {
-      this.isDraggingMain.set(true);
-    } else {
-      this.isDraggingAdditional.set(true);
-    }
+    this.isDragging.set(true);
   }
 
-  onDragLeave(type: 'main' | 'additional'): void {
-    if (type === 'main') {
-      this.isDraggingMain.set(false);
-    } else {
-      this.isDraggingAdditional.set(false);
-    }
+  onDragLeave(): void {
+    this.isDragging.set(false);
   }
 
-  onDrop(event: DragEvent, type: 'main' | 'additional'): void {
+  onDrop(event: DragEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    
-    this.isDraggingMain.set(false);
-    this.isDraggingAdditional.set(false);
+    this.isDragging.set(false);
 
     const files = event.dataTransfer?.files;
     if (files && files.length > 0) {
-      const file = files[0];
-      if (this.isValidImage(file)) {
-        if (type === 'main') {
-          this.uploadMainImage(file);
-        } else {
-          this.uploadAdditionalImage(file);
-        }
-      }
+      this.uploadFiles(Array.from(files));
     }
+  }
+
+  onImagesSelect(event: Event): void {
+    const files = (event.target as HTMLInputElement).files;
+    if (files && files.length > 0) {
+      this.uploadFiles(Array.from(files));
+      (event.target as HTMLInputElement).value = '';
+    }
+  }
+
+  private uploadFiles(files: File[]): void {
+    const validFiles = files.filter(file => this.isValidImage(file));
+    
+    validFiles.forEach(file => {
+      const id = this.generateId();
+      
+      // Agregar preview temporal
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreviews.update(current => [
+          ...current,
+          { id, url: e.target?.result as string, uploading: true }
+        ]);
+      };
+      reader.readAsDataURL(file);
+
+      // Subir a S3
+      this.figuraService.uploadImage(file).subscribe({
+        next: (response) => {
+          this.imagePreviews.update(current =>
+            current.map(img => img.id === id ? { ...img, url: response.url, uploading: false } : img)
+          );
+        },
+        error: () => {
+          this.imagePreviews.update(current => current.filter(img => img.id !== id));
+        }
+      });
+    });
   }
 
   isValidImage(file: File): boolean {
@@ -138,79 +172,59 @@ export class FiguraFormDialogComponent implements OnInit {
     return validTypes.includes(file.type) && file.size <= maxSize;
   }
 
-  onMainImageSelect(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file && this.isValidImage(file)) {
-      this.uploadMainImage(file);
-    }
+  removeImage(index: number): void {
+    this.imagePreviews.update(current => current.filter((_, i) => i !== index));
   }
 
-  onAdditionalImageSelect(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (file && this.isValidImage(file)) {
-      this.uploadAdditionalImage(file);
-    }
-  }
-
-  private uploadMainImage(file: File): void {
-    this.uploadingMain.set(true);
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      this.mainImagePreview.set(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    this.figuraService.uploadImage(file).subscribe({
-      next: (response) => {
-        this.mainImagePreview.set(response.url);
-        this.form.patchValue({ imagenPrincipal: response.url });
-        this.uploadingMain.set(false);
-      },
-      error: () => {
-        this.mainImagePreview.set('');
-        this.uploadingMain.set(false);
-      }
+  moveImageToFirst(index: number): void {
+    this.imagePreviews.update(current => {
+      const newArray = [...current];
+      const [removed] = newArray.splice(index, 1);
+      newArray.unshift(removed);
+      return newArray;
     });
   }
 
-  private uploadAdditionalImage(file: File): void {
-    this.uploadingAdditional.set(true);
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const tempUrl = e.target?.result as string;
-      this.additionalPreviews.update(current => [...current, tempUrl]);
-    };
-    reader.readAsDataURL(file);
-
-    this.figuraService.uploadImage(file).subscribe({
-      next: (response) => {
-        this.additionalPreviews.update(current => {
-          const updated = [...current];
-          updated[updated.length - 1] = response.url;
-          return updated;
-        });
-        this.form.patchValue({ imagenesAdicionales: this.additionalPreviews() });
-        this.uploadingAdditional.set(false);
-      },
-      error: () => {
-        this.additionalPreviews.update(current => current.slice(0, -1));
-        this.uploadingAdditional.set(false);
-      }
-    });
+  // Drag & drop para reordenar
+  onImageDragStart(event: DragEvent, index: number): void {
+    this.draggedIndex = index;
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = 'move';
+    }
   }
 
-  removeAdditionalImage(index: number): void {
-    this.additionalPreviews.update(current => current.filter((_, i) => i !== index));
-    this.form.patchValue({ imagenesAdicionales: this.additionalPreviews() });
+  onImageDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'move';
+    }
+  }
+
+  onImageDrop(event: DragEvent, targetIndex: number): void {
+    event.preventDefault();
+    if (this.draggedIndex !== null && this.draggedIndex !== targetIndex) {
+      this.imagePreviews.update(current => {
+        const newArray = [...current];
+        const [removed] = newArray.splice(this.draggedIndex!, 1);
+        newArray.splice(targetIndex, 0, removed);
+        return newArray;
+      });
+    }
+    this.draggedIndex = null;
   }
 
   save(): void {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.imagePreviews().length === 0) return;
 
     this.saving.set(true);
-    const figura = this.form.value;
+    
+    const images = this.imagePreviews().filter(img => !img.uploading);
+    const figura = {
+      ...this.form.value,
+      descripcionCorta: this.form.value.descripcionLarga?.substring(0, 100) || '',
+      imagenPrincipal: images[0]?.url || '',
+      imagenesAdicionales: images.slice(1).map(img => img.url)
+    };
 
     const request = this.isEditing
       ? this.figuraService.update(this.data!._id!, figura)

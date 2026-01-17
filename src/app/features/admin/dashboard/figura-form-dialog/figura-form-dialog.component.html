@@ -10,14 +10,9 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descripción corta</mat-label>
-            <input matInput formControlName="descripcionCorta" placeholder="Breve descripción para la card"
-                autocomplete="off" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Descripción completa</mat-label>
-            <textarea matInput formControlName="descripcionLarga" rows="3"></textarea>
+            <mat-label>Descripción</mat-label>
+            <textarea matInput formControlName="descripcionLarga" rows="3"
+                placeholder="Descripción de la figura"></textarea>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -44,7 +39,37 @@
         <div class="row">
             <mat-form-field appearance="outline">
                 <mat-label>Lugar de compra</mat-label>
-                <input matInput formControlName="lugarCompra" placeholder="Ej: Persa Bio Bio" autocomplete="off" />
+                <mat-select formControlName="lugarCompra">
+                    <mat-optgroup label="Ferias - Villa Alemana">
+                        <mat-option value="Feria Villa Alemana Centro">Feria Villa Alemana Centro</mat-option>
+                        <mat-option value="Feria Las Américas">Feria Las Américas</mat-option>
+                    </mat-optgroup>
+                    <mat-optgroup label="Ferias - Quilpué">
+                        <mat-option value="Feria Quilpué Centro">Feria Quilpué Centro</mat-option>
+                        <mat-option value="Feria El Belloto">Feria El Belloto</mat-option>
+                    </mat-optgroup>
+                    <mat-optgroup label="Ferias - Viña del Mar">
+                        <mat-option value="Feria Viña del Mar">Feria Viña del Mar</mat-option>
+                        <mat-option value="Feria Forestal">Feria Forestal</mat-option>
+                        <mat-option value="Feria Santa Inés">Feria Santa Inés</mat-option>
+                    </mat-optgroup>
+                    <mat-optgroup label="Ferias - Valparaíso">
+                        <mat-option value="Feria Valparaíso">Feria Valparaíso</mat-option>
+                        <mat-option value="Persa Barón">Persa Barón</mat-option>
+                        <mat-option value="Feria Placeres">Feria Placeres</mat-option>
+                    </mat-optgroup>
+                    <mat-optgroup label="Marketplace">
+                        <mat-option value="MercadoLibre">MercadoLibre</mat-option>
+                        <mat-option value="Facebook Marketplace">Facebook Marketplace</mat-option>
+                        <mat-option value="Yapo">Yapo</mat-option>
+                        <mat-option value="AliExpress">AliExpress</mat-option>
+                        <mat-option value="Amazon">Amazon</mat-option>
+                        <mat-option value="Tienda Online">Tienda Online</mat-option>
+                    </mat-optgroup>
+                    <mat-optgroup label="Otro">
+                        <mat-option value="Otro">Otro</mat-option>
+                    </mat-optgroup>
+                </mat-select>
             </mat-form-field>
 
             <mat-form-field appearance="outline">
@@ -62,54 +87,45 @@
             </mat-form-field>
         </div>
 
-        <!-- Imagen Principal -->
+        <!-- Imágenes -->
         <div class="image-upload-section">
-            <label>Imagen Principal *</label>
-            <div class="upload-area" [class.has-image]="mainImagePreview()" [class.drag-over]="isDraggingMain()"
-                (click)="mainImageInput.click()" (dragover)="onDragOver($event, 'main')"
-                (dragleave)="onDragLeave('main')" (drop)="onDrop($event, 'main')">
-                @if (mainImagePreview()) {
-                <img [src]="mainImagePreview()" alt="Preview" class="preview-image" />
-                <div class="image-overlay">
-                    <mat-icon>edit</mat-icon>
-                    <span>Cambiar imagen</span>
-                </div>
-                } @else {
-                <mat-icon>cloud_upload</mat-icon>
-                <span>Click o arrastra una imagen</span>
-                <small>JPG, PNG, WebP (máx 5MB)</small>
-                }
-            </div>
-            <input #mainImageInput type="file" accept="image/jpeg,image/png,image/webp" hidden
-                (change)="onMainImageSelect($event)" />
-            @if (uploadingMain()) {
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            }
-        </div>
-
-        <!-- Imágenes Adicionales -->
-        <div class="image-upload-section">
-            <label>Imágenes Adicionales</label>
-            <div class="additional-images">
-                @for (img of additionalPreviews(); track img; let i = $index) {
-                <div class="additional-image-item">
-                    <img [src]="img" alt="Adicional" />
-                    <button mat-icon-button (click)="removeAdditionalImage(i)" type="button" class="remove-btn">
-                        <mat-icon>close</mat-icon>
-                    </button>
+            <label>Imágenes (la primera será la principal) *</label>
+            <div class="images-grid">
+                @for (img of imagePreviews(); track img.id; let i = $index) {
+                <div class="image-item" [class.is-main]="i === 0" draggable="true"
+                    (dragstart)="onImageDragStart($event, i)" (dragover)="onImageDragOver($event)"
+                    (drop)="onImageDrop($event, i)">
+                    <img [src]="img.url" alt="Imagen" />
+                    @if (i === 0) {
+                    <span class="main-badge">Principal</span>
+                    }
+                    <div class="image-actions">
+                        @if (i > 0) {
+                        <button mat-icon-button (click)="moveImageToFirst(i)" type="button" class="move-btn"
+                            title="Hacer principal">
+                            <mat-icon>star</mat-icon>
+                        </button>
+                        }
+                        <button mat-icon-button (click)="removeImage(i)" type="button" class="remove-btn">
+                            <mat-icon>close</mat-icon>
+                        </button>
+                    </div>
+                    @if (img.uploading) {
+                    <div class="upload-overlay">
+                        <mat-spinner diameter="30"></mat-spinner>
+                    </div>
+                    }
                 </div>
                 }
-                <div class="upload-area small" [class.drag-over]="isDraggingAdditional()"
-                    (click)="additionalImageInput.click()" (dragover)="onDragOver($event, 'additional')"
-                    (dragleave)="onDragLeave('additional')" (drop)="onDrop($event, 'additional')">
+                <div class="upload-area" [class.drag-over]="isDragging()" (click)="imageInput.click()"
+                    (dragover)="onDragOver($event)" (dragleave)="onDragLeave()" (drop)="onDrop($event)">
                     <mat-icon>add_photo_alternate</mat-icon>
+                    <span>Agregar</span>
                 </div>
             </div>
-            <input #additionalImageInput type="file" accept="image/jpeg,image/png,image/webp" hidden
-                (change)="onAdditionalImageSelect($event)" />
-            @if (uploadingAdditional()) {
-            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
-            }
+            <input #imageInput type="file" accept="image/jpeg,image/png,image/webp" hidden multiple
+                (change)="onImagesSelect($event)" />
+            <small class="hint">Arrastra para reordenar. JPG, PNG, WebP (máx 5MB c/u)</small>
         </div>
 
         <mat-checkbox formControlName="destacado">Marcar como destacada</mat-checkbox>
@@ -119,8 +135,7 @@
 <mat-dialog-actions align="end">
     <button mat-button mat-dialog-close>Cancelar</button>
     <button mat-raised-button color="primary"
-        [disabled]="form.invalid || saving() || uploadingMain() || uploadingAdditional() || !mainImagePreview()"
-        (click)="save()">
+        [disabled]="form.invalid || saving() || isUploading() || imagePreviews().length === 0" (click)="save()">
         {{ saving() ? 'Guardando...' : 'Guardar' }}
     </button>
 </mat-dialog-actions>
