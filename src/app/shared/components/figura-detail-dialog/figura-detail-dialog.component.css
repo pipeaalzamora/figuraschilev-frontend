@@ -142,7 +142,7 @@ mat-dialog-content {
 
 .info-block h4 {
     margin: 0 0 8px 0;
-    color: var(--text-muted);
+    color: #555555;
     font-size: 0.8rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -152,7 +152,7 @@ mat-dialog-content {
 .info-block p {
     margin: 0;
     line-height: 1.7;
-    color: var(--text-secondary);
+    color: #1a1a1a;
 }
 
 .meta-info {
@@ -166,29 +166,57 @@ mat-chip-set {
     gap: 8px;
 }
 
+/* Chips - modo claro */
+mat-chip {
+    background: #f0f0f5 !important;
+    color: #1a1a1a !important;
+}
+
+mat-chip mat-icon {
+    color: #333333 !important;
+}
+
+::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__text-label {
+    color: #1a1a1a !important;
+}
+
+::ng-deep .mat-mdc-chip-action-label {
+    color: #1a1a1a !important;
+}
+
 /* Dark mode specific */
-:host-context([data-theme="dark"]) .dialog-container {
+html[data-theme="dark"] .dialog-container {
     background: #252542;
 }
 
-:host-context([data-theme="dark"]) h2 {
-    color: #f0f0f5;
+html[data-theme="dark"] .dialog-container h2 {
+    color: #ffffff;
 }
 
-:host-context([data-theme="dark"]) .info-block h4 {
-    color: #7b7b90;
-}
-
-:host-context([data-theme="dark"]) .info-block p {
+html[data-theme="dark"] .dialog-container .info-block h4 {
     color: #b0b0c0;
 }
 
-:host-context([data-theme="dark"]) .close-btn {
+html[data-theme="dark"] .dialog-container .info-block p {
+    color: #ffffff;
+}
+
+html[data-theme="dark"] .close-btn {
     background: #16162a !important;
 }
 
-:host-context([data-theme="dark"]) .close-btn mat-icon {
+html[data-theme="dark"] .close-btn mat-icon {
     color: #f0f0f5 !important;
+}
+
+/* Chips en modo oscuro */
+html[data-theme="dark"] .dialog-container mat-chip {
+    background: #2a2a4a !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .dialog-container mat-chip mat-icon {
+    color: #ffffff !important;
 }
 
 @media (max-width: 768px) {

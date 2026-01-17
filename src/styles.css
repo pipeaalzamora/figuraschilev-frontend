@@ -441,16 +441,21 @@ body {
 /* Chips */
 [data-theme="dark"] .mat-mdc-chip {
     --mdc-chip-elevated-container-color: var(--bg-tertiary);
-    --mdc-chip-label-text-color: var(--text-primary);
+    --mdc-chip-label-text-color: #ffffff;
     background-color: var(--bg-tertiary) !important;
 }
 
 [data-theme="dark"] .mat-mdc-chip .mdc-evolution-chip__text-label {
-    color: var(--text-primary) !important;
+    color: #ffffff !important;
 }
 
 [data-theme="dark"] .mat-mdc-chip .mat-icon {
-    color: var(--text-secondary) !important;
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .mat-mdc-standard-chip .mdc-evolution-chip__cell--primary,
+[data-theme="dark"] .mat-mdc-standard-chip .mat-mdc-chip-action-label {
+    color: #ffffff !important;
 }
 
 /* Checkbox */
@@ -579,6 +584,58 @@ body {
 /* ===== Dialog Customization ===== */
 .figura-detail-dialog .mat-mdc-dialog-container {
     padding: 0;
+}
+
+/* Chips en figura detail dialog - modo claro */
+.figura-detail-dialog .mat-mdc-chip {
+    background: #e8e8f0 !important;
+}
+
+.figura-detail-dialog .mat-mdc-chip .mdc-evolution-chip__text-label,
+.figura-detail-dialog .mat-mdc-chip .mat-mdc-chip-action-label {
+    color: #1a1a1a !important;
+}
+
+.figura-detail-dialog .mat-mdc-chip .mat-icon {
+    color: #333333 !important;
+}
+
+/* Info blocks en figura detail dialog - modo claro */
+.figura-detail-dialog .info-block h4 {
+    color: #555555 !important;
+}
+
+.figura-detail-dialog .info-block p {
+    color: #1a1a1a !important;
+}
+
+/* Chips en figura detail dialog - modo oscuro */
+html[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip,
+[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip {
+    background: #2a2a4a !important;
+}
+
+html[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mdc-evolution-chip__text-label,
+html[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mat-mdc-chip-action-label,
+[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mdc-evolution-chip__text-label,
+[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mat-mdc-chip-action-label {
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mat-icon,
+[data-theme="dark"] .figura-detail-dialog .mat-mdc-chip .mat-icon {
+    color: #ffffff !important;
+}
+
+/* Info blocks en figura detail dialog - modo oscuro */
+html[data-theme="dark"] .figura-detail-dialog .info-block h4,
+[data-theme="dark"] .figura-detail-dialog .info-block h4 {
+    color: #b0b0c0 !important;
+}
+
+html[data-theme="dark"] .figura-detail-dialog .info-block p,
+[data-theme="dark"] .figura-detail-dialog .info-block p {
+    color: #ffffff !important;
 }
 
 .lightbox-dialog .mat-mdc-dialog-container {

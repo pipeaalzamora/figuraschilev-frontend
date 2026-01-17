@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, ViewEncapsulation } from '@angular/core';
 import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -20,7 +20,8 @@ import { LightboxComponent } from '../lightbox/lightbox.component';
     DatePipe
   ],
   templateUrl: './figura-detail-dialog.component.html',
-  styleUrl: './figura-detail-dialog.component.css'
+  styleUrl: './figura-detail-dialog.component.css',
+  encapsulation: ViewEncapsulation.None
 })
 export class FiguraDetailDialogComponent {
   data = inject<Figura>(MAT_DIALOG_DATA);
