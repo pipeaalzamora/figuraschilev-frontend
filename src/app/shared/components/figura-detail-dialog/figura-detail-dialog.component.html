@@ -64,6 +64,28 @@
                     </mat-chip>
                     }
                 </mat-chip-set>
+
+                <!-- Share Buttons -->
+                <div class="share-buttons">
+                    <p class="share-label">Compartir:</p>
+                    <div class="share-actions">
+                        <button mat-mini-fab color="primary" (click)="shareWhatsApp()" title="Compartir en WhatsApp">
+                            <mat-icon>chat</mat-icon>
+                        </button>
+                        <button mat-mini-fab class="instagram-btn" (click)="shareInstagram()"
+                            title="Compartir en Instagram">
+                            <mat-icon>photo_camera</mat-icon>
+                        </button>
+                        <button mat-mini-fab class="tiktok-btn" (click)="shareTikTok()" title="Compartir en TikTok">
+                            <mat-icon>videocam</mat-icon>
+                        </button>
+                        @if (hasNativeShare) {
+                        <button mat-mini-fab (click)="shareNative()" title="Compartir">
+                            <mat-icon>share</mat-icon>
+                        </button>
+                        }
+                    </div>
+                </div>
             </div>
         </mat-dialog-content>
     </div>

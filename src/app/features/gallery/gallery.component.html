@@ -24,14 +24,71 @@
 
     <!-- Gallery Grid -->
     <main class="gallery-main">
-        <!-- Search -->
-        <div class="search-container">
+        <!-- Search & Filters -->
+        <div class="search-filter-container">
             <mat-form-field appearance="outline" class="search-field">
-                <mat-label>Buscar figura</mat-label>
+                <mat-label>Buscar figura o feria</mat-label>
                 <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange($event)"
-                    placeholder="Escribe el nombre..." />
+                    placeholder="Ej: Goku, Persa Barón..." />
                 <mat-icon matSuffix>search</mat-icon>
             </mat-form-field>
+
+            <mat-expansion-panel class="filters-panel" [(expanded)]="filtersExpanded">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <mat-icon>filter_list</mat-icon>
+                        Filtros
+                        @if (hasActiveFilters()) {
+                        <span class="filter-badge">{{ filteredFiguras().length }}</span>
+                        }
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+
+                <div class="filters-content">
+                    <!-- Categorías -->
+                    <div class="filter-group">
+                        <h4>Categoría</h4>
+                        <mat-chip-set>
+                            @for (cat of categorias; track cat.value) {
+                            <mat-chip [highlighted]="cat.active" (click)="toggleFilter(cat, categorias)">
+                                {{ cat.label }}
+                            </mat-chip>
+                            }
+                        </mat-chip-set>
+                    </div>
+
+                    <!-- Precios -->
+                    <div class="filter-group">
+                        <h4>Rango de Precio</h4>
+                        <mat-chip-set>
+                            @for (precio of rangosPrecios; track precio.value) {
+                            <mat-chip [highlighted]="precio.active" (click)="toggleFilter(precio, rangosPrecios)">
+                                {{ precio.label }}
+                            </mat-chip>
+                            }
+                        </mat-chip-set>
+                    </div>
+
+                    <!-- Ferias -->
+                    <div class="filter-group">
+                        <h4>Lugar de Compra</h4>
+                        <mat-chip-set>
+                            @for (feria of ferias; track feria.value) {
+                            <mat-chip [highlighted]="feria.active" (click)="toggleFilter(feria, ferias)">
+                                {{ feria.label }}
+                            </mat-chip>
+                            }
+                        </mat-chip-set>
+                    </div>
+
+                    @if (hasActiveFilters()) {
+                    <button mat-stroked-button color="primary" (click)="clearFilters()" class="clear-filters-btn">
+                        <mat-icon>clear</mat-icon>
+                        Limpiar filtros
+                    </button>
+                    }
+                </div>
+            </mat-expansion-panel>
         </div>
 
         @if (loading() && figuras().length === 0) {
@@ -48,35 +105,30 @@
             </div>
             }
         </div>
-        } @else if (figuras().length === 0) {
+        } @else if (filteredFiguras().length === 0) {
         <div class="empty-state fade-in">
             <mat-icon>collections</mat-icon>
-            @if (searchTerm) {
+            @if (searchTerm || hasActiveFilters()) {
             <h3>Sin resultados</h3>
-            <p>No encontré figuras con "{{ searchTerm }}"</p>
+            <p>No encontré figuras con los filtros seleccionados</p>
+            <button mat-raised-button color="primary" (click)="clearFilters()">
+                Limpiar filtros
+            </button>
             } @else {
             <h3>Aún no hay figuras</h3>
             <p>Pronto agregaré mis tesoros de las ferias</p>
             }
         </div>
         } @else {
+        <div class="results-info">
+            <p>{{ filteredFiguras().length }} figura{{ filteredFiguras().length !== 1 ? 's' : '' }} encontrada{{
+                filteredFiguras().length !== 1 ? 's' : '' }}</p>
+        </div>
         <div class="cards-grid">
-            @for (figura of figuras(); track figura._id) {
+            @for (figura of filteredFiguras(); track figura._id) {
             <app-figura-card [figura]="figura" (cardClick)="openDetail($event)" />
             }
         </div>
-
-        @if (hasMore()) {
-        <div class="load-more">
-            <button mat-raised-button color="primary" (click)="loadMore()" [disabled]="loading()">
-                @if (loading()) {
-                <mat-spinner diameter="20"></mat-spinner>
-                } @else {
-                Cargar más
-                }
-            </button>
-        </div>
-        }
         }
     </main>
 

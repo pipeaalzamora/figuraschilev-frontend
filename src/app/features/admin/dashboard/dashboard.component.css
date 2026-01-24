@@ -178,6 +178,14 @@ mat-toolbar span {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.stat-icon.new {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.stat-icon.category {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
 .stat-icon mat-icon {
     font-size: 28px;
     width: 28px;
@@ -194,6 +202,13 @@ mat-toolbar span {
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
+}
+
+.stat-value.stat-text {
+    font-size: 1.3rem;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
 }
 
 .stat-label {

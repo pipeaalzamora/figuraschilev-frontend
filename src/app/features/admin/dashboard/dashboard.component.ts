@@ -109,7 +109,43 @@ export class DashboardComponent implements OnInit {
 
   loadStats(): void {
     this.figuraService.getStats().subscribe({
-      next: (stats) => this.stats.set(stats)
+      next: (stats) => {
+        // Calcular estadísticas adicionales localmente
+        const allFiguras = this.figuras();
+        const now = new Date();
+        const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        // Nuevas esta semana (basado en createdAt)
+        const nuevasEstaSemana = allFiguras.filter(f => {
+          if (f.createdAt) {
+            const createdDate = new Date(f.createdAt);
+            return createdDate >= oneWeekAgo;
+          }
+          return false;
+        }).length;
+
+        // Categoría más popular
+        const categorias = allFiguras.reduce((acc, f) => {
+          if (f.categoria) {
+            acc[f.categoria] = (acc[f.categoria] || 0) + 1;
+          }
+          return acc;
+        }, {} as Record<string, number>);
+        
+        const categoriaPopular = Object.entries(categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || 'N/A';
+        
+        // Precio promedio
+        const precioPromedio = allFiguras.length > 0 
+          ? allFiguras.reduce((sum, f) => sum + f.precio, 0) / allFiguras.length 
+          : 0;
+
+        this.stats.set({
+          ...stats,
+          nuevasEstaSemana,
+          categoriaPopular,
+          precioPromedio
+        });
+      }
     });
   }
 

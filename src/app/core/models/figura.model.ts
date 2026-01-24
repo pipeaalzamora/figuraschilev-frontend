@@ -40,4 +40,7 @@ export interface PaginatedResponse<T> {
 export interface FiguraStats {
   totalFiguras: number;
   totalInvertido: number;
+  nuevasEstaSemana?: number;
+  categoriaPopular?: string;
+  precioPromedio?: number;
 }

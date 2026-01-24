@@ -61,6 +61,24 @@
                         <span class="stat-label">Total Invertido</span>
                     </div>
                 </div>
+                <div class="stat-card">
+                    <div class="stat-icon new">
+                        <mat-icon>fiber_new</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value">{{ stats().nuevasEstaSemana || 0 }}</span>
+                        <span class="stat-label">Nuevas esta Semana</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon category">
+                        <mat-icon>category</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-value stat-text">{{ stats().categoriaPopular || 'N/A' }}</span>
+                        <span class="stat-label">Categoría Popular</span>
+                    </div>
+                </div>
             </div>
 
             <div class="table-container">
